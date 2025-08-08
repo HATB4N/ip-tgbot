@@ -1,7 +1,7 @@
-import asyncio
 import hashlib
-from dotenv import load_dotenv
 import os
+import asyncio
+import httpx
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,7 +9,6 @@ from telegram.ext import (
     ContextTypes,
 )
 
-load_dotenv()
 TOKEN = os.getenv("TOKEN")
 PW_HASH = os.getenv("PW_HASH")
 
@@ -20,13 +19,10 @@ def isValid(chat_id):
     return chat_id in CHAT_IDS
 
 async def get_ip():
-    proc = await asyncio.create_subprocess_exec(
-        "curl", "-s", "ipinfo.io/ip",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
-    )
-    stdout, _ = await proc.communicate()
-    return stdout.decode().strip()
+    async with httpx.AsyncClient(timeout=5) as client:
+        r = await client.get("https://ipinfo.io/ip")
+        r.raise_for_status()
+        return r.text.strip()
 
 async def ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -70,16 +66,6 @@ async def unregister(update: Update, context: ContextTypes.DEFAULT_TYPE):
     LISTEN_IDS.remove(chat_id)
     await context.bot.send_message(chat_id=chat_id, text="unregistered successfully")
 
-async def check_event(context: ContextTypes.DEFAULT_TYPE):
-    if len(LISTEN_IDS) == 0:
-        return
-    new_ip = await get_ip()
-    last_ip = context.job.data.get("last_ip")
-    if new_ip != last_ip:
-        for chat_id in LISTEN_IDS:
-            await context.bot.send_message(chat_id=chat_id, text=f"IP_CHANGED: {new_ip}")
-        context.job.data["last_ip"] = new_ip
-
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help = ("/help: show help\n"
             "/status: show auth status\n"
@@ -88,6 +74,16 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/unregister: unregister for IP change notice\n"
             "/ip: show current IP address")
     await context.bot.send_message(chat_id=update.effective_chat.id, text=help)
+
+async def check_event(context: ContextTypes.DEFAULT_TYPE):
+    if len(LISTEN_IDS) == 0:
+        return
+    new_ip = await get_ip()
+    last_ip = context.job.data.get("last_ip")
+    if new_ip != last_ip:
+        for chat_id in LISTEN_IDS:
+            await context.bot.send_message(chat_id=chat_id, text=f'"NEW_IP": "{new_ip}"')
+        context.job.data["last_ip"] = new_ip
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
