@@ -83,6 +83,7 @@ async def check_event(context: ContextTypes.DEFAULT_TYPE):
     if new_ip != last_ip:
         for chat_id in LISTEN_IDS:
             await context.bot.send_message(chat_id=chat_id, text=f'"NEW_IP": "{new_ip}"')
+            # await context.bot.send_message(chat_id=chat_id, text=f'IP CHANGED: {last_ip} => {new_ip}')
         context.job.data["last_ip"] = new_ip
 
 if __name__ == '__main__':
