@@ -71,6 +71,8 @@ async def unregister(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=chat_id, text="unregistered successfully")
 
 async def check_event(context: ContextTypes.DEFAULT_TYPE):
+    if len(LISTEN_IDS) == 0:
+        return
     new_ip = await get_ip()
     last_ip = context.job.data.get("last_ip")
     if new_ip != last_ip:
