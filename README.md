@@ -1,6 +1,11 @@
 # ip tgbot
 ddns is best invention ever
 
+A Telegram bot for server IP monitoring(for ddns backup).
+
+- Check your current public IP address
+- Get notifications when your IP changes
+
 ## install & run
 ```bash
 git clone https://HATB4N/ipcheck.git
