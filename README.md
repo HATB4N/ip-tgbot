@@ -8,9 +8,9 @@ A Telegram bot for server IP monitoring (DDNS backup).
 
 ## Install & Run
 ```bash
-git clone https://HATB4N/ipcheck.git
+git clone https://HATB4N/ip-tgbot.git
 
-cd ipcheck
+cd ip-tgbot
 
 docker build -t ip-tgbot .
 
